@@ -1,14 +1,15 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-alpine
+FROM ubuntu:latest AS build
 
-# Set the working directory inside the container
-WORKDIR /app
+RUN apt-get update
+RUN apt-get install openjdk-17-jdk -y
+COPY . .
 
-# Copy the JAR file into the container at /app
-COPY target/exp_server-0.0.1-SNAPSHOT.jar app.jar
+RUN ./gradlew bootJar --no-daemon
 
-# Expose the port that the application will run on
+FROM openjdk:17-jdk-slim
+
 EXPOSE 8080
 
-# Run the application when the container starts
-CMD ["java", "-jar", "app.jar"]
+COPY --from=build /build/libs/exp_server-0.0.1-SNAPSHOT.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
